@@ -237,49 +237,45 @@ public final class InstrRewriter {
 				buffer.patch(endPlaceHolder, buffer.label());
 			}
 			case New(Map<String, Expr> initMap, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO New");
 				// create a JSObject class
-				//var clazz = JSObject.newObject(null);
+				var clazz = JSObject.newObject(null);
 				// loop over all the field initializations
-				//initMap().forEach((fieldName, expr) -> {
+				initMap.forEach((fieldName, expr) -> {
 				//  register the field name with the right slot
-				//  clazz.register(...);
+				  clazz.register(fieldName, clazz.length());
 				//   visit the initialization expression
-				//  visit(...);
-				//});
+				  visit(expr, env, buffer, dict);
+				});
 				// emit a NEW with the class
-				//buffer.emit(...).emit(...);
+				buffer.emit(NEW).emit(encodeDictObject(clazz, dict));
 			}
 			case FieldAccess(Expr receiver, String name, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO FieldAccess");
 				// visit the receiver
-				//visit(...);
+				visit(receiver, env, buffer, dict);
 				// emit a GET with the field name
-				//buffer.emit(...).emit(...);
+				buffer.emit(GET).emit(encodeDictObject(name, dict));
 			}
 			case FieldAssignment(Expr receiver, String name, Expr expr, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO FieldAssignment");
 				// visit the receiver
-				//visit(...);
+				visit(receiver, env, buffer, dict);
 				// visit the expression
-				//visit(...);
+				visit(expr, env, buffer, dict);
 				// emit a PUT with the field name
-				//buffer.emit(...).emit(...);
+				buffer.emit(PUT).emit(encodeDictObject(name, dict));
 			}
 			case MethodCall(Expr receiver, String name, List<Expr> args, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO MethodCall");
 				// visit the receiver
-				//visit(...);
+				visit(receiver, env, buffer, dict);
 				// emit a DUP, get the field name and emit a SWAP of the qualifier and the receiver
-				//buffer.emit(DUP);
-				//buffer.emit(...).emit(...);
-				//buffer.emit(SWAP);
+				buffer.emit(DUP);
+				buffer.emit(GET).emit(encodeDictObject(name, dict));
+				buffer.emit(SWAP);
 				// visit all arguments
-				//for (var arg : args) {
-				  //visit(...);
-				//}
+				for (var arg : args) {
+				  visit(arg, env, buffer, dict);
+				}
 				// emit the funcall
-				//buffer.emit(...).emit(...);
+				buffer.emit(FUNCALL).emit(args.size());
 			}
 		}
 	}
