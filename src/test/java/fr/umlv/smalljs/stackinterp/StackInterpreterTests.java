@@ -24,7 +24,7 @@ public class StackInterpreterTests {
     return outStream.toString(UTF_8).replace("\r\n", "\n");
   }
 
-  /*
+/*
   @Tag("Q2") @Test
   public void helloString() {
     assertEquals("", execute("\"hello\"\n"));
@@ -41,12 +41,10 @@ public class StackInterpreterTests {
     assertEquals("foobar\n", execute("print('foobar')\n"));
     assertEquals("3\n", execute("print(3)\n"));
   }
-
   @Tag("Q5") @Test
   public void printPrint() {
     assertFalse(execute("print(print)\n").isEmpty());
   }
-
   @Tag("Q6") @Test
   public void printOperations() {
     assertEquals("5\n", execute("print(3 + 2)\n"));
@@ -54,7 +52,6 @@ public class StackInterpreterTests {
     assertEquals("6\n", execute("print(3 * 2)\n"));
     assertEquals("1\n", execute("print(3 / 2)\n"));
   }
-
   @Tag("Q7") @Test
   public void printPrint3() {
     assertEquals("3\nundefined\n", execute("print(print(3))\n"));
@@ -67,6 +64,7 @@ public class StackInterpreterTests {
             print(a);
             """));
   }
+
   @Tag("Q8") @Test
   public void printSeveralVariables() {
     assertEquals("7\n", execute("""
@@ -151,6 +149,8 @@ public class StackInterpreterTests {
             print(undef());
             """));
   }
+
+ */
 
   @Tag("Q11") @Test
   public void printWithAnIf() {
@@ -240,7 +240,7 @@ public class StackInterpreterTests {
             print(f(7));
             """));
   }
-
+/*
   @Tag("Q12") @Test
   public void callFibo() {
     assertEquals("21\n", execute("""
