@@ -213,10 +213,7 @@ public final class ByteCodeRewriter {
                 throw new Failure("Ayo your slot is undefined in that environment");
             }
             // otherwise STORE the top of the stack at the local variable slot
-            else {
-                mv.visitVarInsn(ASTORE, (int)slotOrUndefined);
-            }
-
+            mv.visitVarInsn(ASTORE, (int)slotOrUndefined);
         }
         case LocalVarAccess(String name, int lineNumber) -> {
             var slotOrUndefinded = env.lookup(name);
@@ -229,16 +226,22 @@ public final class ByteCodeRewriter {
             }
         }
         case Fun fun -> {
-          Optional<String> optName = fun.optName();
-          throw new UnsupportedOperationException("TODO Fun");
-          // register the fun inside the fun directory and get the corresponding id
-          // emit a LDC to load the function corresponding to the id at runtime
-          // generate an invokedynamic doing a register with the function name
+            Optional<String> optName = fun.optName();
+            // register the fun inside the fun directory and get the corresponding id
+            var id = dictionary.register(fun);
+            // emit a LDC to load the function corresponding to the id at runtime
+            mv.visitLdcInsn(new ConstantDynamic("fun", "Ljava/lang/Object;", BSM_FUN, id));
+            // generate an invokedynamic doing a register with the function name
+            optName.ifPresent(name -> {
+                mv.visitInsn(DUP);
+                mv.visitInvokeDynamicInsn("register", "(Ljava/lang/Object;)V", BSM_REGISTER, name);
+            });
         }
         case Return(Expr expr, int lineNumber) -> {
-          // throw new UnsupportedOperationException("TODO Return");
-          // visit the return expression
-          // generate the bytecode
+            // visit the return expression
+            visit(expr, env, mv, dictionary);
+            // generate the bytecode
+            mv.visitInsn(ARETURN);
         }
         case If(Expr condition, Block trueBlock, Block falseBlock, int lineNumber) -> {
           throw new UnsupportedOperationException("TODO If");
