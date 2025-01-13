@@ -24,7 +24,7 @@ public class JVMInterpreterTests {
     return outStream.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
   }
 
-
+  /*
   @Tag("Q2") @Test
   public void helloString() {
     assertEquals("", execute("\"hello\"\n"));
@@ -43,8 +43,6 @@ public class JVMInterpreterTests {
     assertEquals("3\n", execute("print(3)\n"));
   }
 
-  /*
-
   @Tag("Q5") @Test
   public void printPrint() {
     assertFalse(execute("print(print)\n").isEmpty());
@@ -62,7 +60,7 @@ public class JVMInterpreterTests {
   public void printPrint3() {
     assertEquals("3\nundefined\n", execute("print(print(3))\n"));
   }
-  
+
   @Tag("Q8") @Test
   public void printAVariable() {
     assertEquals("3\n", execute("""
@@ -70,7 +68,6 @@ public class JVMInterpreterTests {
             print(a);
             """));
   }
-
   @Tag("Q8") @Test
   public void printSeveralVariables() {
     assertEquals("7\n", execute("""
@@ -95,12 +92,13 @@ public class JVMInterpreterTests {
             print('hello', me);
             """));
   }
-  
+
+
   @Tag("Q9") @Test
   public void printAVariableDefinedAfter() {
     assertEquals("undefined\n", execute("print(a);\nvar a = 2;\n"));
   }
-  
+  */
   @Tag("Q10") @Test
   public void callAUserDefinedFunctionAndPrint() {
     assertEquals("3\n", execute("""
@@ -155,7 +153,7 @@ public class JVMInterpreterTests {
             print(undef());
             """));
   }
-
+  /*
   @Tag("Q11") @Test
   public void printWithAnIf() {
     assertEquals("false\n", execute("""

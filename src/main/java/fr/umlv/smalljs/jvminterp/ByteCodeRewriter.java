@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import fr.umlv.smalljs.rt.Failure;
 import org.objectweb.asm.*;
 import org.objectweb.asm.util.CheckClassAdapter;
 
@@ -203,7 +204,19 @@ public final class ByteCodeRewriter {
             mv.visitInvokeDynamicInsn(name, desc, BSM_FUNCALL);
         }
         case LocalVarAssignment(String name, Expr expr, boolean declaration, int lineNumber) -> {
-            throw new UnsupportedOperationException("TODO VarAssignment");
+            // visit the expression
+            visit(expr, env, mv, dictionary);
+            // lookup that name in the environment
+            var slotOrUndefined = env.lookup(name);
+            // if it does not exist throw a Failure
+            if (slotOrUndefined == JSObject.UNDEFINED) {
+                throw new Failure("Ayo your slot is undefined in that environment");
+            }
+            // otherwise STORE the top of the stack at the local variable slot
+            else {
+                mv.visitVarInsn(ASTORE, (int)slotOrUndefined);
+            }
+
         }
         case LocalVarAccess(String name, int lineNumber) -> {
             var slotOrUndefinded = env.lookup(name);
