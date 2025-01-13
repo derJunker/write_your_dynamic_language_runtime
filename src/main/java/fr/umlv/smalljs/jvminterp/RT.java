@@ -46,22 +46,29 @@ public final class RT {
   }
 
   public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
-    throw new UnsupportedOperationException("TODO bsm_funcall");
     // take GET_MH method handle
+    var combiner = GET_MH;
     // make it accept an Object (not a JSObject) as first parameter
+    combiner = combiner.asType(methodType(MethodHandle.class, Object.class));
     // create a generic invoker (MethodHandles.invoker()) on the parameter types without the qualifier
+    var invoker = MethodHandles.invoker(type.dropParameterTypes(0, 1));
     // drop the qualifier
+    invoker = MethodHandles.dropArguments(invoker, 1, Object.class);
     // use MethodHandles.foldArguments with GET_MH as combiner
+    var target = MethodHandles.foldArguments(invoker, combiner);
     // create a constant callsite
+    return new ConstantCallSite(target);
   }
 
   public static CallSite bsm_lookup(Lookup lookup, String name, MethodType type, String functionName) {
-    throw new UnsupportedOperationException("TODO bsm_lookup");
-    //var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
-    //var globalEnv = classLoader.getGlobal();
+    var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
+    var globalEnv = classLoader.getGlobal();
     // get the LOOKUP method handle
+    var target = LOOKUP;
     // use the global environment as first argument and the functionName as second argument
+    target = MethodHandles.insertArguments(target, 0, globalEnv, functionName);
     // create a constant callsite
+    return new ConstantCallSite(target);
   }
 
   public static Object bsm_fun(Lookup lookup, String name, Class<?> type, int funId) {
