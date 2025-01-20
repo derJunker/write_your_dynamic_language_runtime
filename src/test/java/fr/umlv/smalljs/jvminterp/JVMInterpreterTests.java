@@ -153,7 +153,7 @@ public class JVMInterpreterTests {
             print(undef());
             """));
   }
-  /*
+
   @Tag("Q11") @Test
   public void printWithAnIf() {
     assertEquals("false\n", execute("""
@@ -229,7 +229,7 @@ public class JVMInterpreterTests {
             print(f(7));
             """));
   }
-
+  /*
   @Tag("Q12") @Test
   public void callFibo() {
     assertEquals("21\n", execute("""
