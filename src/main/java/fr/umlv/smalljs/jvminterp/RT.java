@@ -5,12 +5,8 @@ import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodType.methodType;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.ConstantCallSite;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
+import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
 
 import fr.umlv.smalljs.rt.Failure;
 import fr.umlv.smalljs.rt.JSObject;
@@ -48,22 +44,85 @@ public final class RT {
   }
 
   public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
-    // take GET_MH method handle
-    var combiner = GET_MH;
-    // check param count
-    combiner = MethodHandles.filterReturnValue(combiner,
-            MethodHandles.insertArguments(PARAM_CHECK, 1, type.parameterCount()-1));
-    // make it accept an Object (not a JSObject) as first parameter
-    combiner = combiner.asType(methodType(MethodHandle.class, Object.class));
-    // create a generic invoker (MethodHandles.invoker()) on the parameter types without the qualifier
-    var invoker = MethodHandles.invoker(type.dropParameterTypes(0, 1));
+    return new InliningCache(type, 1);
+  }
 
-    // drop the qualifier
-    invoker = MethodHandles.dropArguments(invoker, 1, Object.class);
-    // use MethodHandles.foldArguments with GET_MH as combiner
-    var target = MethodHandles.foldArguments(invoker, combiner);
-    // create a constant callsite
-    return new ConstantCallSite(target);
+  private static class InliningCache extends MutableCallSite {
+    private static final MethodHandle SLOW_PATH, POINTER_CHECK, UNOPTIMIZED_PATH;
+    private static final int MAX_DEPTH = 3;
+    static {
+      var lookup = MethodHandles.lookup();
+      try {
+        SLOW_PATH = lookup.findVirtual(InliningCache.class, "slowPath", methodType(MethodHandle.class, Object.class, Object.class));
+        POINTER_CHECK = lookup.findStatic(InliningCache.class, "pointerCheck", methodType(boolean.class, Object.class, JSObject.class));
+        UNOPTIMIZED_PATH = lookup.findVirtual(InliningCache.class, "unoptimizedPath", methodType(MethodHandle.class, Object.class, Object.class));
+      } catch (NoSuchMethodException | IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    private final int depth;
+    private InliningCache root;
+
+    public InliningCache(MethodType type, int depth, InliningCache root) {
+      super(type);
+      setTarget(MethodHandles.foldArguments(MethodHandles.exactInvoker(type), SLOW_PATH.bindTo(this)));
+      this.depth = depth;
+      this.root = root;
+    }
+
+    public InliningCache(MethodType type, int depth) {
+      super(type);
+      setTarget(MethodHandles.foldArguments(MethodHandles.exactInvoker(type), SLOW_PATH.bindTo(this)));
+      this.depth = depth;
+      this.root = this;
+    }
+
+    private static boolean pointerCheck(Object qualifier, JSObject expectedQualifier) {
+      return qualifier == expectedQualifier;
+    }
+
+    private MethodHandle unoptimizedPath(Object qualifier, Object receiver) {
+      var jsObject = (JSObject)qualifier;
+      var mh = jsObject.getMethodHandle();
+
+      parameterCheck(mh, type().parameterCount()-1);
+
+        return MethodHandles.dropArguments(mh, 0, Object.class)
+                .withVarargs(mh.isVarargsCollector())
+                .asType(type());
+    }
+
+    private MethodHandle slowPath(Object qualifier, Object receiver) {
+        var jsObject = (JSObject)qualifier;
+        var mh = jsObject.getMethodHandle();
+
+        parameterCheck(mh, type().parameterCount()-1);
+
+
+        var target = MethodHandles.dropArguments(mh, 0, Object.class)
+                                  .withVarargs(mh.isVarargsCollector())
+                                  .asType(type());
+
+        if (depth >= MAX_DEPTH) {
+          setTarget(MethodHandles.foldArguments(MethodHandles.exactInvoker(type()), UNOPTIMIZED_PATH.bindTo(this)));
+          return target;
+        }
+
+        var pointerCheck = MethodHandles.insertArguments(POINTER_CHECK, 1, qualifier);
+        if (root == null)
+          root = this;
+        var fallback = new InliningCache(type(), depth + 1, root).dynamicInvoker();
+
+        var guard = MethodHandles.guardWithTest(
+                pointerCheck,
+                target,
+                fallback);
+
+        setTarget(guard);
+
+        return target;
+    }
   }
 
   public static CallSite bsm_lookup(Lookup lookup, String name, MethodType type, String functionName) {

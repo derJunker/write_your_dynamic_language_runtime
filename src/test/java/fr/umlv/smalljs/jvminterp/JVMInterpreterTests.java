@@ -229,7 +229,7 @@ public class JVMInterpreterTests {
             print(f(7));
             """));
   }
-  /*
+
   @Tag("Q12") @Test
   public void callFibo() {
     assertEquals("21\n", execute("""
@@ -259,7 +259,7 @@ public class JVMInterpreterTests {
   }
   @Tag("Q12") @Test
   public void callSeveralOperations() {
-    assertEquals("5\n-1\n6\n0\n", execute("""
+    assertEquals("5\n-1\n6\n0\n6\n", execute("""
             function calc(f, a, b) {
              return f(a, b);
             }
@@ -267,6 +267,7 @@ public class JVMInterpreterTests {
             print(calc(-, 2, 3));
             print(calc(*, 2, 3));
             print(calc(/, 2, 3));
+            print(calc(*, 2, 3));
             """));
   }
   @Tag("Q12") @Test
@@ -279,7 +280,7 @@ public class JVMInterpreterTests {
             print(f());
             """));
   }
-
+/*
   @Tag("Q13") @Test
   public void createAnObject() {
     assertEquals("""
